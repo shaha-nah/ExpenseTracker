@@ -1,0 +1,479 @@
+#include "WaterElectricity.h"
+#include "Telephone.h"
+#include "Entertainment.h"
+
+ofstream fo;
+ifstream fi;
+
+void CreateCustomerFile() {
+	fo.open("Customer.txt");
+	fo << "Account Number\t\tName\t\t\t\tEmail\t\t\tAddress\t\t\tPhone Number\n";
+	fo.close();
+}
+
+void CreateWaterFile() {
+	fo.open("Water.txt");
+	fo << "Account Number\tName\t\t\tBilling Date\tMonth\tBilling Number\tService Number\tSurcharge\tMeter Service Number\tCurrent Meter Number\tPrevious Meter Number\tUsage\tAmount Due\n";
+	fo.close();
+}
+
+void CreateElectricityFile() {
+	fo.open("Electricity.txt");
+	fo << "Account Number\tName\t\t\tBilling Date\tMonth\tBilling Number\tService Number\tSurcharge\tMeter Service Number\tCurrent Meter Number\tPrevious Meter Number\tUsage\tAmount Due\n";
+	fo.close();
+}
+
+void CreateTelephoneFile() {
+	fo.open("Telephone.txt");
+	fo << "Account Number\tName\t\t\tBillingDate\tMonth\tBilling Number\tServiceNumber\tSurcharge\tRegular Service Charge\tLocal Calls Charge\tLong Distance Calls Charge\tAmountDue\n";
+	fo.close();
+}
+
+void CreateEntertainmentFile() {
+	fo.open("Entertainment.txt");
+	fo << "Account Number\tName\t\t\tBillingDate\tMonth\tBilling Number\tServiceNumber\tSurcharge\tInternet Charge\tCable TV Charge\tWireless Charge\tAmountDue\n";
+	fo.close();
+}
+
+bool check(int accnum) {
+	int ac, num;
+	string buffer, n, e, add;
+	bool ex;
+	ex = false;
+	fi.open("Customer.txt");
+	getline(fi, buffer);
+	while (fi >> ac >> n >> e >> add >> num) {
+		if (ac == accnum) {
+			ex = true;
+		}
+	}
+	fi.close();
+	return ex;
+}
+
+void InputCustomerDetails() {
+	int ac, num;
+	string n, e, add;
+	bool ex;
+	ex = false;
+	cout << "Enter account number: ";
+	cin >> ac;
+	cin.ignore();
+	ex = check(ac);
+	if (ex == false) {
+		cout << "Enter name: ";
+		getline(cin, n);
+		cout << "Enter email: ";
+		getline(cin, e);
+		cout << "Enter address: ";
+		getline(cin, add);
+		cout << "Enter phone number: ";
+		cin >> num;
+		cin.ignore();
+		Customer c(ac, n, e, add, num);
+		c.inputc(ac, n, e, add, num);
+	}
+	else {
+		cout << "Account already exists.";
+	}
+}
+
+void Output(string filename) {
+	string buffer;
+	fi.open(filename);
+	while (!fi.eof()) {
+		getline(fi, buffer);
+		cout << buffer << endl;
+	}
+	fi.close();
+}
+
+void InputWaterElectricityBillDetails(string filename,int ac, string n, string add, string bd, int mon, int bn, int sn, double sc,double rate) {
+	int me;
+	double cme, pme, us, amtdue;
+	WaterElectricity we;
+	we.setAccNumber(ac);
+	we.setName(n);
+	we.setAddress(add);
+	we.setBillingDate(bd);
+	we.setMonth(mon);
+	we.setBillNumber(bn);
+	we.setSerialNumber(sn);
+	we.setSurcharge(sc); 
+	cout << "Enter meter serial number: ";
+	cin >> me;
+	cin.ignore();
+	we.setMeter(me);
+	cout << "Enter current meter read: ";
+	cin >> cme;
+	cin.ignore();
+	we.setCurrentMeter(cme);
+	cout << "Enter previous meter read: ";
+	cin >> pme;
+	cin.ignore();
+	we.setPreviousMeter(pme);
+	us = we.usage(cme, pme);
+	amtdue = we.calculateAmountDue(cme, pme, rate);
+	we.inputwe(filename, ac, n, add, bd, mon, bn, sn, sc, me, cme, pme, us, amtdue);
+}
+
+void InputTelephoneDetails(int ac, string n, string add, string bd, int mon, int bn, int sn, double sc){
+	double sch, lc, ldc, amtdue;
+	Telephone t;
+	t.setAccNumber(ac);
+	t.setName(n);
+	t.setAddress(add);
+	t.setBillingDate(bd);
+	t.setMonth(mon);
+	t.setBillNumber(bn);
+	t.setSerialNumber(sn);
+	t.setSurcharge(sc);
+	cout << "Enter regular service charge: ";
+	cin >> sch;
+	cin.ignore();
+	t.setServiceCharge(sch);
+	cout << "Enter local call charge: ";
+	cin >> lc;
+	cin.ignore();
+	t.setLocalCalls(lc);
+	cout << "Enter long distance call charge: ";
+	cin >> ldc;
+	cin.ignore();
+	t.setLongDistanceCalls(ldc);
+	amtdue = t.calculateAmountDue(sch, lc, ldc);
+	t.inputt(ac, n, add, bd, mon, bn, sn, sc, sch, lc, ldc, amtdue);
+}
+
+void InputEntertainmentDetails(int ac, string n, string add, string bd, int mon, int bn, int sn, double sc) {
+	double in, cab, wir, amtdue;
+	Entertainment e;
+	e.setAccNumber(ac);
+	e.setName(n);
+	e.setAddress(add);
+	e.setBillingDate(bd);
+	e.setMonth(mon);
+	e.setBillNumber(bn);
+	e.setSerialNumber(sn);
+	e.setSurcharge(sc);
+	cout << "Enter internet charge: ";
+	cin >> in;
+	cin.ignore();
+	e.setInternet(in);
+	cout << "Enter cable tv charge: ";
+	cin >> cab;
+	cin.ignore();
+	e.setCableTv(cab);
+	cout << "Enter wireless: ";
+	cin >> wir;
+	cin.ignore();
+	e.setWireless(wir);
+	amtdue = e.calculateAmountDue(in, cab, wir);
+	e.inpute(ac, n, add, bd, mon, bn, sn, sc, in, cab, wir,amtdue);
+}
+
+void InputBillDetails() {
+	int choice, ac, num, acn, bn, sn, mon;
+	string buffer, n, e, add, name, address, bd;
+	double sc, rate;
+	bool ex, found;
+	found = false;
+	system("cls");
+	cout << "Enter account number: ";
+	cin >> ac;
+	cin.ignore();
+	ex = check(ac);
+	if (ex == true){
+		fi.open("Customer.txt");
+		getline(fi, buffer);
+		while ((fi >> acn >> n >> e >> add >> num) || (found==false)) {
+			if (acn == ac) {
+				name = n;
+				address = add;
+				found = true;
+			}
+		}
+		fi.close();
+		system("cls");
+		cout << "Enter billing date: ";
+		getline(cin, bd);
+		cout << "Enter month: ";
+		cin >> mon;
+		cin.ignore();
+		cout << "Enter bill number: ";
+		cin >> bn;
+		cin.ignore();
+		cout << "Enter serial number: ";
+		cin >> sn;
+		cin.ignore();
+		cout << "Enter surcharge: ";
+		cin >> sc;
+		cin.ignore();
+		cout << "Choose a bill" << endl;
+		cout << "1. Water" << endl;
+		cout << "2 .Electricity" << endl;
+		cout << "3. Telephone " << endl;
+		cout << "4. Entertainment" << endl;
+		cout << "Enter choice: ";
+		cin >> choice;
+		switch (choice){
+		case 1: rate = 3;
+			InputWaterElectricityBillDetails("Water.txt", ac, n, add, bd, mon, bn, sn, sc, rate);
+			break;
+		case 2: rate = 3.5;
+			InputWaterElectricityBillDetails("Electricity.txt", ac, n, add, bd, mon, bn, sn, sc, rate);
+			break;
+		case 3: InputTelephoneDetails(ac, n, add, bd, mon, bn, sn, sc);
+			break;
+		case 4: InputEntertainmentDetails(ac, n, add, bd, mon, bn, sn, sc);
+			break;
+		case 5: break;
+		}
+	}
+	else {
+		cout << "Account does not exist.";
+	}
+}
+
+void OutputWaterElectricityBill(string filename, int acn, int mth) {
+	int ac, mon, bn, sn, me;
+	double sc, cme, pme, us, amtdue;
+	string n, add, bd;
+	fi.open(filename);
+	while (fi >> ac >> n >> add >> bd >> mon >> bn >> sn >> sc >> me >> cme >> pme >> us >> amtdue) {
+		if ((acn == ac) && (mon == mth)) {
+			cout << endl;
+			cout << "Account Number: " << ac << endl;
+			cout << "Name: " << n << endl;
+			cout << "Address: " << add << endl;
+			cout << "Billing Number: " << bd << endl;
+			cout << "Service Number: " << sn << endl;
+			cout << "Billing date: " << bd << endl;
+			cout << "Month: " << mon << endl;
+			cout << "Meter Number" << me << endl;
+			cout << "Previous Meter Reading: " << pme << endl;
+			cout << "Current Meter Reading: " << cme << endl;
+			cout << "Current Meter Reading: " << cme << endl;
+			cout << "Usage: " << us << endl;
+			cout << "Amount Due: " << amtdue << endl;
+			cout << "Surcharge: " << sc << endl;
+			cout << endl;
+		}
+	}
+	fi.close();
+ }
+
+void OutputTelephoneBill(int acn, int mth) {
+	int ac, mon, bn, sn;
+	double sc, sch, lc, ldc, amtdue;
+	string n, add, bd;
+	fi.open("Telephone.txt");
+	while (fi >> ac >> n >> add >> bd >> mon >> bn >> sn >> sc >> sch >> lc >> ldc >> amtdue) {
+		if ((acn == ac) && (mon == mth)) {
+			cout << "Account Number: " << ac << endl;
+			cout << "Name: " << n << endl;
+			cout << "Address: " << add << endl;
+			cout << "Billing Number: " << bd << endl;
+			cout << "Service Number: " << sn << endl;
+			cout << "Billing date: " << bd << endl;
+			cout << "Month: " << mon << endl;
+			cout << "Regular Service Charge: " << sch << endl;
+			cout << "Local Call Charge : " << lc << endl;
+			cout << "Long Distance Call Charge: " << ldc << endl;
+			cout << "Amount Due: " << amtdue << endl;
+			cout << "Surcharge: " << sc << endl;
+		}
+	}
+}
+
+void OutputEntertainmentBill(int acn, int mth) {
+	int ac, mon, bn, sn;
+	double sc, in, cab, wir, amtdue;
+	string n, add, bd;
+	fi.open("Entertainment.txt");
+	while (fi >> ac >> n >> add >> bd >> mon >> bn >> sn >> sc >> in >> cab >> wir >> amtdue) {
+		if ((acn == ac) && (mon == mth)) {
+			cout << endl;
+			cout << "Account Number: " << ac << endl;
+			cout << "Name: " << n << endl;
+			cout << "Address: " << add << endl;
+			cout << "Billing Number: " << bd << endl;
+			cout << "Service Number: " << sn << endl;
+			cout << "Billing date: " << bd << endl;
+			cout << "Month: " << mon << endl;
+			cout << "Internet Charge: " << in << endl;
+			cout << "Cable TV Charge: " << cab << endl;
+			cout << "Wireless Charge: " << wir << endl;
+			cout << "Amount Due: " << amtdue << endl;
+			cout << "Surcharge: " << sc << endl;
+			cout << endl;
+
+		}
+		fi.close();
+	}
+}
+
+void ChooseBill() {
+	int ac, uchoice, choice , mon;
+	bool ex;
+	cout << "Enter account number: ";
+	cin >> ac;
+	ex = check(ac);
+	if (ex == true) {
+		cout << "1. Water" << endl;
+		cout << "2. Electricity" << endl;
+		cout << "3. Telephone" << endl;
+		cout << "4. Entertainment" << endl;
+		cout << "Choose a utility: ";
+		cin >> uchoice;
+		cout << "1. All bills." << endl;
+		cout << "2. Bill for a specific month" << endl;
+		cout << "Enter a choice: ";
+		cin >> choice;
+		if (choice == 1) {
+			switch (uchoice) {
+			case 1: Output("Water.txt");
+				break;
+			case 2: Output("Electricity.txt");
+				break;
+			case 3: Output("Telephone.txt");
+				break;
+			case 4: Output("Entertainment.txt");
+				break;
+			}
+		}
+		else {
+			cout << "Choose a month: ";
+			cin >> mon;
+			switch (uchoice) {
+			case 1: OutputWaterElectricityBill("Water.txt", ac, mon);
+				break;
+			case 2: OutputWaterElectricityBill("Electricity.txt", ac, mon);
+				break;
+			case 3: OutputTelephoneBill(ac, mon);
+				break;
+			case 4: OutputEntertainmentBill(ac, mon);
+				break;
+			}
+		}
+	}
+	else {
+		cout << "Account does not exist.";
+	}
+}
+
+void WaterElectricityGraph(string filename, int acn) {
+	int ac, mon, bn, sn, me;
+	double sc, cme, pme, us, amtdue, arrAmt[11];
+	string n, add, bd;
+	fi.open(filename);
+	while (fi >> ac >> n >> add >> bd >> mon >> bn >> sn >> sc >> me >> cme >> pme >> us >> amtdue) {
+		if (ac == acn) {
+			arrAmt[mon - 1] = amtdue;
+		}
+	}
+	//graph
+	fi.close();
+}
+
+void TelephoneEntertainmentGraph(string filename, int acn) {
+	int ac, mon, bn, sn;
+	double sc, x, y, z, amtdue, arrAmt[11];
+	string n, add, bd;
+	fi.open("Telephone.txt");
+	while (fi >> ac >> n >> add >> bd >> mon >> bn >> sn >> sc >> x >> y >> z >> amtdue) {
+		if (ac == acn) {
+			arrAmt[mon - 1] = amtdue;
+		}
+	}
+	//graph
+	fi.close();
+}
+
+void ChooseGraph() {
+	int ac, choice;
+	bool ex;
+	cout << "Enter Account Number: ";
+	cin >> ac;
+	ex = check(ac);
+	if (ex == true) {
+		cout << "1. Water" << endl;
+		cout << "2. Electricity" << endl;
+		cout << "3. Telephone" << endl;
+		cout << "4. Entertainment" << endl;
+		cout << "Choose a utility: ";
+		cin >> choice;
+		switch (choice) {
+		case 1:WaterElectricityGraph("Water.txt", ac);
+			break;
+		case 2:WaterElectricityGraph("Electricity.txt", ac);
+			break;
+		case 3:TelephoneEntertainmentGraph("Telephone.txt", ac);
+			break;
+		case 4:TelephoneEntertainmentGraph("Entertainment.txt", ac);
+			break;
+		}
+	}
+	else {
+		cout << "Account does not exist.";
+	}
+}
+
+int main() {
+	int choice;
+	fi.open("Customer.txt");
+	if (!fi) {
+		CreateCustomerFile();
+	}
+	fi.close();
+	fi.open("Water.txt");
+	if (!fi) {
+		CreateWaterFile();
+	}
+	fi.close();
+	fi.open("Electricity.txt");
+	if (!fi) {
+		CreateElectricityFile();
+	}
+	fi.close();
+	fi.open("Telephone.txt");
+	if (!fi) {
+		CreateTelephoneFile();
+	}
+	fi.close();
+	fi.open("Entertainment.txt");
+	if (!fi) {
+		CreateEntertainmentFile();
+	}
+	fi.close();
+	do {
+		cout << "1. Input customer details." << endl;
+		cout << "2. Output customer details" << endl;
+		//one customer
+		//all customers
+		//modify customer details
+		//delete a customer
+		cout << "3. Input bill details" << endl;
+		cout << "4. Output bill details" << endl;
+		//display total monthly expense for a customer
+		cout << "5. Display a graph" << endl;
+		cout << "6. Exit" << endl;
+		cout << "Enter choice: ";
+		cin >> choice;
+		switch (choice)
+		{
+		case 1: InputCustomerDetails();
+			break;
+		case 2: Output("Customer.txt");
+			break;
+		case 3: InputBillDetails();
+			break;
+		case 4: ChooseBill();
+			break;
+		case 5: ChooseGraph();
+			break;
+		}
+		system("pause");
+		system("cls");
+	} while (choice != 5);
+	return 0;
+}
